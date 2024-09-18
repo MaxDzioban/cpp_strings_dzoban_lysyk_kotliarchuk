@@ -163,64 +163,135 @@ void my_str_t::clear() {
 }
 
 
+// void my_str_t::insert(size_t idx, const my_str_t& str) {
+//     if (idx > size_m) {
+//         throw std::out_of_range("index out of range");
+//     }
+//
+//     if (size_m + str.size_m > capacity_m) {
+//         this->shrink_to_fit();
+//         capacity_m = 2*(size_m + str.size_m)+1;
+//         char* data = new char[capacity_m];
+//
+//         std::memmove(data, data_m, idx);                      // Копіюємо першу частину
+//         std::cout<<data;
+//         std::memmove(data + idx, str.data_m, str.size_m);      // Вставляємо новий рядок
+//         std::cout<<data;
+//         std::memmove(data + idx + str.size_m, data_m + idx, size_m - idx); // Копіюємо решту
+//         std::cout<<data;
+//
+//         // delete[] data_m;
+//         data_m = data;
+//         // capacity_m = size_m + str.size_m + 1;
+//     }
+//
+//     size_m += str.size_m;  // Оновлюємо фактичний розмір
+//     data_m[size_m] = '\0';
+// }
+
 void my_str_t::insert(size_t idx, const my_str_t& str) {
     if (idx > size_m) {
         throw std::out_of_range("index out of range");
     }
 
+    // Перевіряємо, чи потрібно розширити буфер
     if (size_m + str.size_m > capacity_m) {
-        this->shrink_to_fit();
-        char* data = new char[size_m + str.size_m + 1];
+        size_t new_capacity = 2 * (size_m + str.size_m) + 1;
+        char* new_data = new char[new_capacity];
 
-        std::memmove(data, data_m, idx);                      // Копіюємо першу частину
-        std::memmove(data + idx, str.data_m, str.size_m);      // Вставляємо новий рядок
-        std::memmove(data + idx + str.size_m, data_m + idx, size_m - idx); // Копіюємо решту
+        // Копіюємо першу частину оригінального рядка
+        std::memmove(new_data, data_m, idx);
 
+        // Копіюємо новий рядок у місце вставки
+        std::memmove(new_data + idx, str.data_m, str.size_m);
+
+        // Копіюємо другу частину оригінального рядка
+        std::memmove(new_data + idx + str.size_m, data_m + idx, size_m - idx);
+
+        // Звільняємо стару пам'ять
         delete[] data_m;
-        data_m = data;
-        capacity_m = size_m + str.size_m + 1;
+
+        data_m = new_data;
+        capacity_m = new_capacity;
+    } else {
+        // Якщо буфер достатньо великий, робимо вставку в наявний масив
+        std::memmove(data_m + idx + str.size_m, data_m + idx, size_m - idx);
+        std::memmove(data_m + idx, str.data_m, str.size_m);
     }
 
-    size_m += str.size_m;  // Оновлюємо фактичний розмір
+    // Оновлюємо розмір і додаємо термінуючий символ
+    size_m += str.size_m;
+    data_m[size_m] = '\0';
 }
+
 
 void my_str_t::insert(size_t idx, char c) {
     if (idx > size_m) {
         throw std::out_of_range("index out of range");
     }
-
-    // this->shrink_to_fit();
-    char* data = new char[2*size_m +1];  // Виділяємо місце під новий символ
-
-    std::memmove(data, data_m, idx);    // Копіюємо першу частину
-    data[idx] = c;                      // Вставляємо символ
-    std::memmove(data + idx + 1, data_m + idx, size_m - idx); // Копіюємо решту
-
-    delete[] data_m;
+    this->shrink_to_fit();
+    capacity_m = size_m*2 + 1;
+    char* data = new char[capacity_m];
+    std::memmove(data, data_m, idx);
+    data[idx] = c;
+    std::memmove(data + idx+1, data_m + idx, size_m - idx);
     data_m = data;
-    capacity_m = 2*size_m +1;  // Оновлюємо ємність
-    size_m += 1;              // Оновлюємо фактичний розмір
+    // capacity_m = size_m*2 + 1;
+    size_m = size_m + 1;
+    data_m[size_m] = '\0';
+    // std::cout<<data_m;
 }
 
-
+// void my_str_t::insert(size_t idx, const char* cstr) {
+//     size_t len = std::strlen(cstr);
+//
+//     if (idx > size_m) {
+//         throw std::out_of_range("index out of range");
+//     }
+//
+//     // shrink_to_fit();
+//     char* data = new char[size_m + len + 1];  // Виділяємо місце під новий рядок
+//
+//     std::memmove(data, data_m, idx);          // Копіюємо першу частину
+//     std::memmove(data + idx, cstr, len);      // Вставляємо новий рядок
+//     std::memmove(data + idx + len, data_m + idx, size_m - idx); // Копіюємо решту
+//
+//     delete[] data_m;
+//     data_m = data;
+//     capacity_m = size_m + len + 1;  // Оновлюємо ємність
+//     size_m += len;                  // Оновлюємо фактичний розмір
+//     data_m[size_m] = '\0';
+// }
 void my_str_t::insert(size_t idx, const char* cstr) {
     size_t len = std::strlen(cstr);
 
-    if (idx > size_m) {
-        throw std::out_of_range("index out of range");
-    }
+if (idx > size_m) {
+    throw std::out_of_range("index out of range");
+}
 
-    shrink_to_fit();
-    char* data = new char[size_m + len + 1];  // Виділяємо місце під новий рядок
+// Перевіряємо, чи потрібно розширювати буфер
+if (size_m + len > capacity_m) {
+    size_t new_capacity = 2 * (size_m + len) + 1;
+    char* new_data = new char[new_capacity];
 
-    std::memmove(data, data_m, idx);          // Копіюємо першу частину
-    std::memmove(data + idx, cstr, len);      // Вставляємо новий рядок
-    std::memmove(data + idx + len, data_m + idx, size_m - idx); // Копіюємо решту
+    // Копіюємо частини даних з вставкою нового рядка
+    std::memmove(new_data, data_m, idx);                 // Копіюємо першу частину
+    std::memmove(new_data + idx, cstr, len);             // Вставляємо новий рядок
+    std::memmove(new_data + idx + len, data_m + idx, size_m - idx); // Копіюємо решту
 
+    // Звільняємо старий буфер і оновлюємо дані
     delete[] data_m;
-    data_m = data;
-    capacity_m = size_m + len + 1;  // Оновлюємо ємність
-    size_m += len;                  // Оновлюємо фактичний розмір
+    data_m = new_data;
+    capacity_m = new_capacity;
+} else {
+    // Якщо буфер достатньо великий, робимо вставку в наявний масив
+    std::memmove(data_m + idx + len, data_m + idx, size_m - idx);
+    std::memmove(data_m + idx, cstr, len);
+}
+
+// Оновлюємо розмір і додаємо термінуючий символ
+size_m += len;
+data_m[size_m] = '\0';
 }
 
 void my_str_t::append(char c)
@@ -243,7 +314,7 @@ void my_str_t::append (const char* cstr) {
 }
 
 void my_str_t::erase(size_t begin, size_t size) {
-    if (begin >= size_m) {
+    if (begin > size_m) {
         throw std::out_of_range("index out of range");
     }
     int i = 0;
@@ -258,9 +329,8 @@ const char* my_str_t::c_str() const { return data_m; }
 size_t  my_str_t::capacity() const  { return capacity_m; }
 size_t my_str_t::size() const { return size_m; }
 
-size_t my_str_t::find(char c, size_t idx)
-{
-    if (idx >= size_m)
+size_t my_str_t::find(char c, size_t idx){
+    if (idx > size_m)
     {
         throw std::out_of_range("my_str_t::find");
     }
@@ -274,8 +344,11 @@ size_t my_str_t::find(char c, size_t idx)
     return not_found;
 }
 
-size_t my_str_t::find(const std::string& str, size_t idx)
-{
+size_t my_str_t::find(const std::string& str, size_t idx){
+    if (idx > size_m)
+    {
+        throw std::out_of_range("my_str_t::find");
+    }
     size_t substr_i = 0;
     size_t str_len = str.size();
     for (size_t i = idx; i < size_m; ++i)
@@ -293,11 +366,14 @@ size_t my_str_t::find(const std::string& str, size_t idx)
     return not_found;
 }
 
-size_t my_str_t::find(const char* cstr, size_t idx)
-{
+size_t my_str_t::find(const char* cstr, size_t idx){
+    if (idx > size_m)
+    {
+        throw std::out_of_range("my_str_t::find");
+    }
     size_t substr_i = 0;
     size_t str_len = std::strlen(cstr);
-    std::cout << str_len << std::endl;
+    // std::cout << str_len << std::endl;
     for (size_t i = idx; i < size_m; ++i)
     {
         while (substr_i < str_len && data_m[i + substr_i] == cstr[substr_i])
@@ -313,14 +389,19 @@ size_t my_str_t::find(const char* cstr, size_t idx)
     return not_found;
 }
 
+
 my_str_t my_str_t::substr(size_t begin, size_t size)
 {
-    if (begin >= size_m)
+    if (begin > size_m)
     {
-        throw std::out_of_range("my_str_t::substr");
+        throw std::out_of_range("Incorrect index!");
     }
     my_str_t substr = my_str_t(size);
-    std::memcpy(substr.data_m, &(this->at(begin)), size);
+    if (begin != size_m) {
+        std::memcpy(substr.data_m, &(this->at(begin)), size);
+    }
+    substr.size_m = (size > size_m - begin) ? size_m - begin : size;
+    substr.data_m[size] = '\0';
     return substr;
 }
 
@@ -338,7 +419,7 @@ std::istream& operator>>(std::istream& stream, my_str_t& str){
     while (std::isspace(stream.get())){}
     stream.unget();
     str.clear();
-    while (!std::isspace(stream.peek()))
+    while (!std::isspace(stream.peek()) && !stream.eof())
     {
         str.append(static_cast<char>(stream.get()));
     }
@@ -350,7 +431,7 @@ std::istream& readline(std::istream& stream, my_str_t& str)
     str.clear();
     for (size_t i = 0; stream.peek() != '\n'; i++)
     {
-        str.append(stream.get());
+        str.append(static_cast<char>(stream.get()));
     }
     return stream;
 }
@@ -502,6 +583,5 @@ bool operator>= (const char* cstr1, const my_str_t& str2) {
 }
 
 int main() {
-    // Ваш код тут
     return 0;
 }
