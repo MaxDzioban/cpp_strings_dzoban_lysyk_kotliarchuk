@@ -2,8 +2,8 @@
 #define my_str_h
 #pragma once
 
-// #include <ostream>
-// #include <cstring>
+#include <iostream>
+#include <cstring>
 
 class my_str_t {
 private:
@@ -68,6 +68,14 @@ public:
     size_t find(char c, size_t idx = 0);
     size_t find(const std::string& str, size_t idx = 0);
     size_t find(const char* cstr, size_t idx = 0);
+
+
+    my_str_t& operator+=(char chr);
+    my_str_t& operator+=(const my_str_t& mystr);
+    my_str_t& operator+=(const char* mystr);
+    my_str_t& operator*=(int count);
+
+
     //! Деструктор.
     ~my_str_t();
 };
@@ -100,15 +108,13 @@ bool operator<=(const my_str_t& str1, const my_str_t& str2);
 bool operator<=(const char* cstr1, const my_str_t& str2);
 bool operator<=(const my_str_t& str1, const char* cstr2);
 
-bool operator+=(const my_str_t& str1, const my_str_t& str2);
-bool operator+=(const char* cstr1, const my_str_t& str2);
-bool operator+=(const my_str_t& str1, const char* cstr2);
 
-bool operator*(const my_str_t& str1, const my_str_t& str2);
-bool operator*(const char* cstr1, const my_str_t& str2);
-bool operator*(const my_str_t& str1, const char* cstr2);
+my_str_t operator+(const my_str_t& mystr, const my_str_t& mystr2);
+my_str_t operator+(const my_str_t& mystr, const char* mystr2);
+my_str_t operator+(const my_str_t& mystr2, char chr);
+my_str_t operator+(char chr, const my_str_t& mystr2);
 
-bool operator*=(const my_str_t& str1, const my_str_t& str2);
-bool operator*=(const char* cstr1, const my_str_t& str2);
-bool operator*=(const my_str_t& str1, const char* cstr2);
+my_str_t operator*(my_str_t& str1, int count);
+my_str_t operator*(int count, my_str_t& str1);
+
 #endif

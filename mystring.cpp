@@ -24,11 +24,30 @@ my_str_t::my_str_t(size_t size, char initial):
 }
 
 //! Копіює вміст С-стрічки, вимоги до capacity_m -- ті ж, що вище
+//my_str_t::my_str_t(const char* cstr) {
+//  	// null pointer  -> logic error
+//    if (cstr == nullptr) {
+//      throw std::logic_error("Null pointer passed to constructor");
+//    }
+//    //! const char* cstr = поінтер на незмінний С-шний масив букв.
+//    size_m = std::strlen(cstr); //!обчислює довжину стрічки cstr, не враховуючи нульовий символ завершення
+//    data_m = new char[size_m]; //! виділили память довж size_m
+//    capacity_m = size_m+1; //! враховуємо символ завершення
+//    std::strcpy(data_m, cstr); //! перекопіювали
+//    // std::cout << "Size: " << size_m << std::endl;
+//    // std::cout << "Capacity: " << capacity_m << std::endl;
+//    // std::cout << "Content: " << data_m << std::endl;
+//}
+//! Копіює вміст С-стрічки, вимоги до capacity_m -- ті ж, що вище
 my_str_t::my_str_t(const char* cstr) {
+    // null pointer  -> logic error
+    if (cstr == nullptr) {
+      throw std::logic_error("Null pointer passed to constructor");
+    }
     //! const char* cstr = поінтер на незмінний С-шний масив букв.
     size_m = std::strlen(cstr); //!обчислює довжину стрічки cstr, не враховуючи нульовий символ завершення
-    data_m = new char[size_m]; //! виділили память довж size_m
-    capacity_m = size_m+1; //! враховуємо символ завершення
+    capacity_m = 2 *size_m + 1; //! враховуємо символ завершення
+    data_m = new char[capacity_m]; //! виділили память довж size_m
     std::strcpy(data_m, cstr); //! перекопіювали
     // std::cout << "Size: " << size_m << std::endl;
     // std::cout << "Capacity: " << capacity_m << std::endl;
@@ -162,52 +181,20 @@ void my_str_t::clear() {
     data_m[size_m] = '\0';  //! + символ завершення
 }
 
-
-// void my_str_t::insert(size_t idx, const my_str_t& str) {
-//     if (idx > size_m) {
-//         throw std::out_of_range("index out of range");
-//     }
-//
-//     if (size_m + str.size_m > capacity_m) {
-//         this->shrink_to_fit();
-//         capacity_m = 2*(size_m + str.size_m)+1;
-//         char* data = new char[capacity_m];
-//
-//         std::memmove(data, data_m, idx);                      // Копіюємо першу частину
-//         std::cout<<data;
-//         std::memmove(data + idx, str.data_m, str.size_m);      // Вставляємо новий рядок
-//         std::cout<<data;
-//         std::memmove(data + idx + str.size_m, data_m + idx, size_m - idx); // Копіюємо решту
-//         std::cout<<data;
-//
-//         // delete[] data_m;
-//         data_m = data;
-//         // capacity_m = size_m + str.size_m + 1;
-//     }
-//
-//     size_m += str.size_m;  // Оновлюємо фактичний розмір
-//     data_m[size_m] = '\0';
-// }
-
 void my_str_t::insert(size_t idx, const my_str_t& str) {
     if (idx > size_m) {
         throw std::out_of_range("index out of range");
     }
-
     // Перевіряємо, чи потрібно розширити буфер
     if (size_m + str.size_m > capacity_m) {
         size_t new_capacity = 2 * (size_m + str.size_m) + 1;
         char* new_data = new char[new_capacity];
-
         // Копіюємо першу частину оригінального рядка
         std::memmove(new_data, data_m, idx);
-
         // Копіюємо новий рядок у місце вставки
         std::memmove(new_data + idx, str.data_m, str.size_m);
-
         // Копіюємо другу частину оригінального рядка
         std::memmove(new_data + idx + str.size_m, data_m + idx, size_m - idx);
-
         // Звільняємо стару пам'ять
         delete[] data_m;
 
@@ -226,6 +213,7 @@ void my_str_t::insert(size_t idx, const my_str_t& str) {
 
 
 void my_str_t::insert(size_t idx, char c) {
+
     if (idx > size_m) {
         throw std::out_of_range("index out of range");
     }
@@ -263,8 +251,10 @@ void my_str_t::insert(size_t idx, char c) {
 //     data_m[size_m] = '\0';
 // }
 void my_str_t::insert(size_t idx, const char* cstr) {
+  	if (cstr == nullptr) {
+      throw std::logic_error("Null pointer passed to constructor");
+    }
     size_t len = std::strlen(cstr);
-
 if (idx > size_m) {
     throw std::out_of_range("index out of range");
 }
@@ -419,7 +409,7 @@ std::istream& operator>>(std::istream& stream, my_str_t& str){
     while (std::isspace(stream.get())){}
     stream.unget();
     str.clear();
-    while (!std::isspace(stream.peek()) && !stream.eof())
+    while (!std::isspace(stream.peek()) && !stream.eof() && !stream.fail())
     {
         str.append(static_cast<char>(stream.get()));
     }
@@ -582,6 +572,85 @@ bool operator>= (const char* cstr1, const my_str_t& str2) {
   return (str2 <= cstr1);
 }
 
-int main() {
-    return 0;
+my_str_t& my_str_t::operator+=(const char chr) {
+    append(chr);
+    return *this;
+}
+
+my_str_t& my_str_t::operator+=(const my_str_t& mystr) {
+    append(mystr);
+    return *this;
+}
+
+my_str_t& my_str_t::operator+=(const char* mystr) {
+    append(mystr);
+    return *this;
+}
+
+my_str_t operator+(const my_str_t& mystr, const my_str_t& mystr2) {
+    my_str_t temp(mystr);
+    temp += mystr2;
+    return temp;
+}
+
+my_str_t operator+(const my_str_t& mystr, const char* mystr2) {
+    my_str_t temp(mystr);
+    temp += mystr2;
+    return temp;
+}
+
+my_str_t operator+(const char* mystr, const my_str_t& mystr2) {
+    my_str_t temp(mystr);
+    temp += mystr2;
+    return temp;
+}
+
+my_str_t operator+(const my_str_t& mystr, const char chr) {
+    my_str_t temp(mystr);
+    temp += chr;
+    return temp;
+}
+
+my_str_t operator+(const char chr, const my_str_t& mystr) {
+    my_str_t temp(1);
+    temp.resize(1, chr);
+    temp += mystr;
+    return temp;
+}
+
+my_str_t& my_str_t::operator*=(int const count)
+{
+    if (count < 0)
+    {
+        throw(std::invalid_argument("my_str_t::operator*=(int const count)"));
+    }
+    this->reserve(2 * (this->size() * count) + 1);
+    my_str_t const str_copy(*this);
+    for(int i = 1; i < count; ++i)
+    {
+        this->append(str_copy);
+    }
+    this->size_m = str_copy.size_m * count;
+    this->data_m[this->size_m] = '\0';
+    return *this;
+};
+
+my_str_t operator*(my_str_t& str1, int const count)
+{
+    if (count < 0)
+    {
+        throw(std::invalid_argument("my_str_t::operator*=(int const count)"));
+    }
+    my_str_t result(str1);
+    for (int i = 1; i < count; ++i)
+    {
+        result.append(str1);
+    }
+    result.resize(str1.size() * count);
+    return result;
+}
+
+my_str_t operator*(int const count, my_str_t& str1)
+{
+    return str1 * count;
 }
